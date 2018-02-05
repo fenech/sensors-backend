@@ -2,6 +2,8 @@ version: "3.3"
 services:
   sensor-backend:
     command: npm run debug
+    volumes:
+      - ./dist:/opt/app/dist
     ports:
       - "3000:3000"
       - "9229:9229"
