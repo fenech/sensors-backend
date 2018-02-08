@@ -4,6 +4,19 @@ services:
     command: npm run debug
     volumes:
       - ./dist:/opt/app/dist
+      - ./uploads:/opt/app/uploads
     ports:
       - "3000:3000"
       - "9229:9229"
+    depends_on:
+      - message-broker
+      - sensors-publisher
+
+  message-broker:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+
+  sensors-publisher:
+    image: sensors-publisher

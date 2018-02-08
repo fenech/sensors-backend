@@ -37,7 +37,7 @@
                 "docker-debug"
             ],
             "restart": true,
-            "timeout": 60000,
+            "timeout": 30000,
             "localRoot": "${workspaceRoot}",
             "remoteRoot": "/opt/app",
             "outFiles": [
