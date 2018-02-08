@@ -15,12 +15,14 @@ const upload = multer({
     fileFilter: (req: Req, file, cb) => {
         if (!req.body.timestamp) {
             cb(new Error("missing field \"timestamp\" in form data"), false);
+            return;
         }
 
         const date = new Date(+req.body.timestamp);
 
         if (isNaN(date.getTime())) {
             cb(new Error("field \"timestamp\" must be a valid timestamp"), false);
+            return;
         }
 
         cb(null, true);
