@@ -1,18 +1,74 @@
 import * as express from "express";
-import { sseMiddleware, SseResponse } from "./sse";
-import { data } from "./data";
-import { setTimeout } from "timers";
+import * as mqtt from "mqtt";
+import * as multer from "multer";
+
+import { sseMiddleware } from "./sse";
+
+interface Req extends express.Request {
+    body: {
+        timestamp: string;
+    };
+}
+
+const upload = multer({
+    dest: "uploads/",
+    fileFilter: (req: Req, file, cb) => {
+        if (!req.body.timestamp) {
+            cb(new Error("missing field \"timestamp\" in form data"), false);
+        }
+
+        const date = new Date(+req.body.timestamp);
+
+        if (isNaN(date.getTime())) {
+            cb(new Error("field \"timestamp\" must be a valid timestamp"), false);
+        }
+
+        cb(null, true);
+    }
+});
 
 const app = express();
-var connections: SseResponse[] = [];
+
+const connections: express.Response[] = [];
 
 app.use(sseMiddleware);
 
-app.get('/stream', (req, res: SseResponse) => {
+app.get('/stream', sseMiddleware, (req, res) => {
     res.sseSetup();
-
-    setInterval(() => res.sseSend(data()), 1000);
     connections.push(res);
+});
+
+const handleUpload: express.RequestHandler = (req, res, next) => {
+    upload.single("video")(req, res, err => {
+        if (err) {
+            res.writeHead(400, err.message);
+            res.send();
+        } else {
+            next();
+        }
+    });
+};
+
+const sendCreated: express.RequestHandler = (req, res, next) => {
+    res.sendStatus(201);
+    res.send();
+};
+
+app.post('/upload',
+    handleUpload,
+    sendCreated
+);
+
+const client = mqtt.connect("mqtt://message-broker");
+
+client.on("connect", () => {
+    client.subscribe("subscriber");
+});
+
+client.on("message", (topic, message) => {
+    connections.forEach(res => {
+        res.sseSend(message.toString());
+    });
 });
 
 app.listen(3000);

@@ -1,11 +1,15 @@
-import { RequestHandler, Response } from "express";
+import { RequestHandler } from "express";
 
-export interface SseResponse extends Response {
-    sseSetup: { (): void };
-    sseSend: { (data: {}): void };
+declare global {
+    namespace Express {
+        interface Response {
+            sseSetup: { (): void };
+            sseSend: { (message: string): void };
+        }
+    }
 }
 
-export const sseMiddleware: RequestHandler = (request, response: SseResponse, next) => {
+export const sseMiddleware: RequestHandler = (request, response, next) => {
     response.sseSetup = function () {
         response.writeHead(200, {
             'Access-Control-Allow-Origin': '*',
@@ -15,8 +19,8 @@ export const sseMiddleware: RequestHandler = (request, response: SseResponse, ne
         });
     }
 
-    response.sseSend = function (data) {
-        response.write("data: " + JSON.stringify(data) + "\n\n");
+    response.sseSend = function (message) {
+        response.write("data: " + message + "\n\n");
     }
 
     next();
