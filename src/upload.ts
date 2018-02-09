@@ -3,7 +3,8 @@ import * as multer from "multer";
 
 interface Req extends Request {
     body: {
-        timestamp: string;
+        timestamp: string | number;
+        date: Date;
     };
 }
 
@@ -15,7 +16,8 @@ const upload = multer({
             return;
         }
 
-        const date = new Date(+req.body.timestamp);
+        req.body.timestamp = +req.body.timestamp;
+        const date = new Date(req.body.timestamp);
 
         if (isNaN(date.getTime())) {
             cb(new Error("field \"timestamp\" must be a valid timestamp"), false);
