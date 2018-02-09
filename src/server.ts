@@ -16,7 +16,18 @@ app.get('/stream', sseMiddleware, (req, res) => {
     connections.push(res);
 });
 
-app.post('/upload', uploadMiddleware, saveVideoMiddleware, (req, res) => {
+app.post('/upload', uploadMiddleware, saveVideoMiddleware, (req, res, next) => {
+    const message = {
+        dimension: req.body.dimension,
+        timestamp: req.body.timestamp
+    };
+
+    connections.forEach(res => {
+        res.write(`event: newvideo\ndata: ${JSON.stringify(message)}\n\n`);
+    });
+
+    next();
+}, (req, res) => {
     res.sendStatus(201);
     res.send();
 });

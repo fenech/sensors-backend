@@ -1,30 +1,27 @@
 import { Request, RequestHandler } from "express";
 import * as multer from "multer";
 
-interface Req extends Request {
-    body: {
-        timestamp: string | number;
-        date: Date;
-    };
-}
-
 const upload = multer({
     dest: "uploads/",
-    fileFilter: (req: Req, file, cb) => {
-        if (!req.body.timestamp) {
-            cb(new Error("missing field \"timestamp\" in form data"), false);
-            return;
+    fileFilter: (req: Request, file, cb) => {
+        try {
+            ["timestamp", "dimension"].forEach(field => {
+                if (!req.body[field]) {
+                    throw new Error(`missing field "${field}" in form data`);
+                }
+            });
+
+            req.body.timestamp = +req.body.timestamp;
+            const date = new Date(req.body.timestamp);
+
+            if (isNaN(date.getTime())) {
+                throw new Error(`field "timestamp" must be a valid timestamp`);
+            }
+
+            cb(null, true);
+        } catch (err) {
+            cb(err, false);
         }
-
-        req.body.timestamp = +req.body.timestamp;
-        const date = new Date(req.body.timestamp);
-
-        if (isNaN(date.getTime())) {
-            cb(new Error("field \"timestamp\" must be a valid timestamp"), false);
-            return;
-        }
-
-        cb(null, true);
     }
 });
 
