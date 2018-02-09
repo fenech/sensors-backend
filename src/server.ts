@@ -3,6 +3,7 @@ import * as mqtt from "mqtt";
 
 import { sseMiddleware } from "./sse";
 import { uploadMiddleware } from "./upload";
+import { fetchAllVideosMiddleware, saveVideoMiddleware } from "./videos";
 
 const app = express();
 
@@ -15,10 +16,12 @@ app.get('/stream', sseMiddleware, (req, res) => {
     connections.push(res);
 });
 
-app.post('/upload', uploadMiddleware, (req, res) => {
+app.post('/upload', uploadMiddleware, saveVideoMiddleware, (req, res) => {
     res.sendStatus(201);
     res.send();
 });
+
+app.get('/videos', fetchAllVideosMiddleware);
 
 const client = mqtt.connect("mqtt://message-broker");
 

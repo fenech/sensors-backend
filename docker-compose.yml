@@ -3,3 +3,8 @@ services:
   sensor-backend:
     build: .
     command: npm run start
+    depends_on:
+      - database
+
+  database:
+    image: mongo:latest
