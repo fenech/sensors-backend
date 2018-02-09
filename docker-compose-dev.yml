@@ -4,6 +4,7 @@ services:
     command: npm run debug
     volumes:
       - ./dist:/opt/app/dist
+      - ./node_modules:/opt/app/node_modules
       - ./uploads:/opt/app/uploads
     ports:
       - "3000:3000"
