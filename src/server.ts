@@ -19,7 +19,7 @@ app.get('/stream', sseMiddleware, (req, res) => {
 app.post('/upload', uploadMiddleware, saveVideoMiddleware, (req, res, next) => {
     const message = {
         dimension: req.body.dimension,
-        timestamp: req.body.timestamp
+        timestamp: new Date(req.body.timestamp).getTime()
     };
 
     connections.forEach(res => {

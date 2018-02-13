@@ -11,7 +11,6 @@ const upload = multer({
                 }
             });
 
-            req.body.timestamp = +req.body.timestamp;
             const date = new Date(req.body.timestamp);
 
             if (isNaN(date.getTime())) {
