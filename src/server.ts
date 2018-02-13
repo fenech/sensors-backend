@@ -3,7 +3,7 @@ import * as mqtt from "mqtt";
 
 import { sseMiddleware } from "./sse";
 import { uploadMiddleware } from "./upload";
-import { fetchAllVideosMiddleware, saveVideoMiddleware } from "./videos";
+import { deleteAllVideosMiddleware, fetchAllVideosMiddleware, saveVideoMiddleware } from "./videos";
 
 const app = express();
 
@@ -32,7 +32,14 @@ app.post('/upload', uploadMiddleware, saveVideoMiddleware, (req, res, next) => {
     res.send();
 });
 
-app.get('/videos', fetchAllVideosMiddleware);
+const allowCorsMiddleware: express.RequestHandler = (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+};
+
+app.get('/videos', allowCorsMiddleware, fetchAllVideosMiddleware);
+app.delete('/videos', deleteAllVideosMiddleware);
 
 const client = mqtt.connect("mqtt://message-broker");
 
