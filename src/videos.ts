@@ -3,22 +3,20 @@ import * as mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
     timestamp: Date,
+    dimension: String,
     path: String
 });
 
 const Video = mongoose.model("Video", schema);
 
-const connect = (onOpen: express.RequestHandler): express.RequestHandler => (req, res, next) => {
-    mongoose.connect("mongodb://database/videos");
+mongoose.connect("mongodb://database/videos");
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "connection error:"));
 
-    const db = mongoose.connection;
-    db.on("error", console.error.bind(console, "connection error:"));
-    db.once("open", () => onOpen(req, res, next));
-};
-
-export const saveVideoMiddleware = connect((req, res, next) => {
+export const saveVideoMiddleware: express.RequestHandler = (req, res, next) => {
     const video = new Video({
         timestamp: req.body.timestamp,
+        dimension: req.body.dimension,
         path: req.file.path
     });
 
@@ -29,15 +27,32 @@ export const saveVideoMiddleware = connect((req, res, next) => {
             next();
         }
     });
-});
+};
 
-export const fetchAllVideosMiddleware = connect((req, res, next) => {
-    Video.find((err, videos) => {
+export const fetchAllVideosMiddleware: express.RequestHandler = (req, res, next) => {
+    Video.aggregate([{
+        $group: {
+            _id: "$dimension",
+            timestamps: { $addToSet: "$timestamp" }
+        }
+    }], (err: Error, videos: { _id: string, timestamps: Date[] }[]) => {
         if (err) {
             console.error(err);
-            return;
+            res.sendStatus(500);
         }
 
-        res.send(videos);
+        const response = videos.reduce((prev, curr) => ({
+            ...prev,
+            [curr._id]: curr.timestamps.map(t => t.getTime())
+        }), {});
+
+        res.json(response);
     });
-});
+};
+
+export const deleteAllVideosMiddleware: express.RequestHandler = (req, res, next) => {
+    Video.find({}, (err, videos) => {
+        videos.forEach(video => video.remove());
+        res.sendStatus(204);
+    });
+};
